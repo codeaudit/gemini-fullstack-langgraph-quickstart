@@ -1,39 +1,52 @@
 import { InputForm } from "./InputForm";
+import { SearchMode } from "./SearchModeSelector";
 
 interface WelcomeScreenProps {
   handleSubmit: (
     submittedInputValue: string,
     effort: string,
-    model: string
+    model: string,
+    searchMode: SearchMode
   ) => void;
   onCancel: () => void;
   isLoading: boolean;
+  searchMode: SearchMode;
+  setSearchMode: (mode: SearchMode) => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   handleSubmit,
   onCancel,
   isLoading,
+  searchMode,
+  setSearchMode,
 }) => (
-  <div className="h-full flex flex-col items-center justify-center text-center px-4 flex-1 w-full max-w-3xl mx-auto gap-4">
-    <div>
-      <h1 className="text-5xl md:text-6xl font-semibold text-neutral-100 mb-3">
-        Welcome.
-      </h1>
-      <p className="text-xl md:text-2xl text-neutral-400">
-        How can I help you today?
-      </p>
+  <div className="h-full flex flex-col items-center justify-center px-6 w-full max-w-4xl mx-auto">
+    <div className="flex-1 flex flex-col justify-center items-center space-y-8">
+      <div className="text-center space-y-3">
+        <h1 className="text-4xl md:text-5xl font-normal tracking-tight">
+          <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Intuition Machine Deep Research Tool
+          </span>
+        </h1>
+      </div>
     </div>
-    <div className="w-full mt-4">
+
+    <div className="w-full max-w-3xl mb-8">
       <InputForm
         onSubmit={handleSubmit}
         isLoading={isLoading}
         onCancel={onCancel}
         hasHistory={false}
+        searchMode={searchMode}
+        setSearchMode={setSearchMode}
       />
     </div>
-    <p className="text-xs text-neutral-500">
-      Powered by Google Gemini and LangChain LangGraph.
-    </p>
+    
+    <div className="mb-16">
+      <p className="text-xs text-muted-foreground text-center">
+        Powered by Intuition Machine Quaternion Process Theory
+      </p>
+    </div>
   </div>
 );

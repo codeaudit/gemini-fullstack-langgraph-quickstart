@@ -9,13 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchModeSelector, SearchMode } from "./SearchModeSelector";
 
 // Updated InputFormProps
 interface InputFormProps {
-  onSubmit: (inputValue: string, effort: string, model: string) => void;
+  onSubmit: (inputValue: string, effort: string, model: string, searchMode: SearchMode) => void;
   onCancel: () => void;
   isLoading: boolean;
   hasHistory: boolean;
+  searchMode: SearchMode;
+  setSearchMode: (mode: SearchMode) => void;
 }
 
 export const InputForm: React.FC<InputFormProps> = ({
@@ -23,15 +26,17 @@ export const InputForm: React.FC<InputFormProps> = ({
   onCancel,
   isLoading,
   hasHistory,
+  searchMode,
+  setSearchMode,
 }) => {
   const [internalInputValue, setInternalInputValue] = useState("");
   const [effort, setEffort] = useState("medium");
-  const [model, setModel] = useState("gemini-2.5-flash-preview-04-17");
+  const [model, setModel] = useState("gemini-2.5-flash");
 
   const handleInternalSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!internalInputValue.trim()) return;
-    onSubmit(internalInputValue, effort, model);
+    onSubmit(internalInputValue, effort, model, searchMode);
     setInternalInputValue("");
   };
 
@@ -46,134 +51,84 @@ export const InputForm: React.FC<InputFormProps> = ({
   const isSubmitDisabled = !internalInputValue.trim() || isLoading;
 
   return (
-    <form
-      onSubmit={handleInternalSubmit}
-      className={`flex flex-col gap-2 p-3 pb-4`}
-    >
-      <div
-        className={`flex flex-row items-center justify-between text-white rounded-3xl rounded-bl-sm ${
-          hasHistory ? "rounded-br-sm" : ""
-        } break-words min-h-7 bg-neutral-700 px-4 pt-3 `}
-      >
-        <Textarea
-          value={internalInputValue}
-          onChange={(e) => setInternalInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Who won the Euro 2024 and scored the most goals?"
-          className={`w-full text-neutral-100 placeholder-neutral-500 resize-none border-0 focus:outline-none focus:ring-0 outline-none focus-visible:ring-0 shadow-none
-                        md:text-base  min-h-[56px] max-h-[200px]`}
-          rows={1}
-        />
-        <div className="-mt-3">
-          {isLoading ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-red-500 hover:text-red-400 hover:bg-red-500/10 p-2 cursor-pointer rounded-full transition-all duration-200"
-              onClick={onCancel}
-            >
-              <StopCircle className="h-5 w-5" />
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              variant="ghost"
-              className={`${
-                isSubmitDisabled
-                  ? "text-neutral-500"
-                  : "text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
-              } p-2 cursor-pointer rounded-full transition-all duration-200 text-base`}
-              disabled={isSubmitDisabled}
-            >
-              Search
-              <Send className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row gap-2">
-          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2  max-w-[100%] sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm">
-              <Brain className="h-4 w-4 mr-2" />
-              Effort
+    <div className="w-full space-y-6">
+      {/* Search Mode Selector */}
+      <SearchModeSelector 
+        searchMode={searchMode}
+        onSearchModeChange={setSearchMode}
+        disabled={isLoading}
+      />
+
+      <form onSubmit={handleInternalSubmit} className="space-y-4">
+                 {/* Main input container - Gemini style */}
+         <div className="relative w-full max-w-3xl mx-auto">
+           <div className="relative flex items-center bg-card border border-border rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 min-h-[56px] px-6 py-2">
+             <Textarea
+               value={internalInputValue}
+               onChange={(e) => setInternalInputValue(e.target.value)}
+               onKeyDown={handleKeyDown}
+               placeholder="Ask me anything..."
+               className="flex-1 resize-none border-0 bg-transparent text-base placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 py-2 pl-2 pr-0 min-h-[24px] max-h-[200px]"
+               rows={1}
+               disabled={isLoading}
+             />
+             <Button
+               type="submit"
+               onClick={handleInternalSubmit}
+               disabled={isLoading || !internalInputValue.trim()}
+               size="sm"
+               className="ml-3 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground p-0 shrink-0"
+             >
+               <Send className="h-4 w-4" />
+             </Button>
+           </div>
+         </div>
+
+        {/* Controls Row - Only show for search modes, positioned below main input */}
+        {searchMode !== "no-search" && (
+          <div className="flex gap-3 justify-center max-w-2xl mx-auto">
+            <div className="flex-1 max-w-xs">
+              <Select value={effort} onValueChange={setEffort} disabled={isLoading}>
+                <SelectTrigger className="h-9 bg-card border-border rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="low">Low Effort{searchMode === "deep" ? " (8 queries, 15 loops)" : ""}</SelectItem>
+                  <SelectItem value="medium">Medium Effort{searchMode === "deep" ? " (10 queries, 15 loops)" : ""}</SelectItem>
+                  <SelectItem value="high">High Effort{searchMode === "deep" ? " (12 queries, 15 loops)" : ""}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={effort} onValueChange={setEffort}>
-              <SelectTrigger className="w-[120px] bg-transparent border-none cursor-pointer">
-                <SelectValue placeholder="Effort" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer">
-                <SelectItem
-                  value="low"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  Low
-                </SelectItem>
-                <SelectItem
-                  value="medium"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  Medium
-                </SelectItem>
-                <SelectItem
-                  value="high"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  High
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2  max-w-[100%] sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm ml-2">
-              <Cpu className="h-4 w-4 mr-2" />
-              Model
+            <div className="flex-1 max-w-xs">
+              <Select value={model} onValueChange={setModel} disabled={isLoading}>
+                <SelectTrigger className="h-9 bg-card border-border rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-[150px] bg-transparent border-none cursor-pointer">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer">
-                <SelectItem
-                  value="gemini-2.0-flash"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Zap className="h-4 w-4 mr-2 text-yellow-400" /> 2.0 Flash
-                  </div>
-                </SelectItem>
-                <SelectItem
-                  value="gemini-2.5-flash-preview-04-17"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Zap className="h-4 w-4 mr-2 text-orange-400" /> 2.5 Flash
-                  </div>
-                </SelectItem>
-                <SelectItem
-                  value="gemini-2.5-pro-preview-05-06"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Cpu className="h-4 w-4 mr-2 text-purple-400" /> 2.5 Pro
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </div>
-        {hasHistory && (
-          <Button
-            className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer rounded-xl rounded-t-sm pl-2 "
-            variant="default"
-            onClick={() => window.location.reload()}
-          >
-            <SquarePen size={16} />
-            New Search
-          </Button>
         )}
-      </div>
-    </form>
+
+        {/* New search button */}
+        {hasHistory && (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-full"
+              onClick={() => window.location.reload()}
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+              <span className="text-sm">New Search</span>
+            </Button>
+          </div>
+        )}
+      </form>
+    </div>
   );
 };

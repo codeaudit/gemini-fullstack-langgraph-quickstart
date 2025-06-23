@@ -39,6 +39,26 @@ class Configuration(BaseModel):
         metadata={"description": "The maximum number of research loops to perform."},
     )
 
+    deep_research_mode: bool = Field(
+        default=False,
+        metadata={"description": "Enable deep research mode for comprehensive analysis."}
+    )
+    
+    deep_research_queries: int = Field(
+        default=8,
+        metadata={"description": "Number of initial queries in deep research mode."}
+    )
+    
+    deep_research_loops: int = Field(
+        default=15,
+        metadata={"description": "Maximum research loops in deep research mode."}
+    )
+    
+    deep_research_validation_rounds: int = Field(
+        default=2,
+        metadata={"description": "Additional validation rounds for deep research."}
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

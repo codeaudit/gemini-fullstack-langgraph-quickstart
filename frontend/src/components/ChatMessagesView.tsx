@@ -12,6 +12,7 @@ import {
   ActivityTimeline,
   ProcessedEvent,
 } from "@/components/ActivityTimeline"; // Assuming ActivityTimeline is in the same dir or adjust path
+import { SearchMode } from "./SearchModeSelector";
 
 // Markdown component props type from former ReportView
 type MdComponentProps = {
@@ -43,9 +44,9 @@ const mdComponents = {
     </p>
   ),
   a: ({ className, children, href, ...props }: MdComponentProps) => (
-    <Badge className="text-xs mx-0.5">
+    <Badge className="text-xs mx-0.5 bg-gray-600 hover:bg-gray-700 text-white border-0">
       <a
-        className={cn("text-blue-400 hover:text-blue-300 text-xs", className)}
+        className={cn("text-white hover:text-gray-200 text-xs", className)}
         href={href}
         target="_blank"
         rel="noopener noreferrer"
@@ -73,7 +74,7 @@ const mdComponents = {
   blockquote: ({ className, children, ...props }: MdComponentProps) => (
     <blockquote
       className={cn(
-        "border-l-4 border-neutral-600 pl-4 italic my-3 text-sm",
+        "border-l-4 border-border pl-4 italic my-3 text-sm",
         className
       )}
       {...props}
@@ -84,7 +85,7 @@ const mdComponents = {
   code: ({ className, children, ...props }: MdComponentProps) => (
     <code
       className={cn(
-        "bg-neutral-900 rounded px-1 py-0.5 font-mono text-xs",
+        "bg-muted rounded px-1 py-0.5 font-mono text-xs",
         className
       )}
       {...props}
@@ -95,7 +96,7 @@ const mdComponents = {
   pre: ({ className, children, ...props }: MdComponentProps) => (
     <pre
       className={cn(
-        "bg-neutral-900 p-3 rounded-lg overflow-x-auto font-mono text-xs my-3",
+        "bg-muted p-3 rounded-lg overflow-x-auto font-mono text-xs my-3",
         className
       )}
       {...props}
@@ -104,7 +105,7 @@ const mdComponents = {
     </pre>
   ),
   hr: ({ className, ...props }: MdComponentProps) => (
-    <hr className={cn("border-neutral-600 my-4", className)} {...props} />
+    <hr className={cn("border-border my-4", className)} {...props} />
   ),
   table: ({ className, children, ...props }: MdComponentProps) => (
     <div className="my-3 overflow-x-auto">
@@ -116,7 +117,7 @@ const mdComponents = {
   th: ({ className, children, ...props }: MdComponentProps) => (
     <th
       className={cn(
-        "border border-neutral-600 px-3 py-2 text-left font-bold",
+        "border border-border px-3 py-2 text-left font-bold",
         className
       )}
       {...props}
@@ -126,7 +127,7 @@ const mdComponents = {
   ),
   td: ({ className, children, ...props }: MdComponentProps) => (
     <td
-      className={cn("border border-neutral-600 px-3 py-2", className)}
+      className={cn("border border-border px-3 py-2", className)}
       {...props}
     >
       {children}
@@ -147,7 +148,7 @@ const HumanMessageBubble: React.FC<HumanMessageBubbleProps> = ({
 }) => {
   return (
     <div
-      className={`text-white rounded-3xl break-words min-h-7 bg-neutral-700 max-w-[100%] sm:max-w-[90%] px-4 pt-3 rounded-br-lg`}
+      className={`text-primary-foreground rounded-3xl break-words min-h-7 bg-primary max-w-[100%] sm:max-w-[90%] px-4 pt-3 rounded-br-lg`}
     >
       <ReactMarkdown components={mdComponents}>
         {typeof message.content === "string"
@@ -189,7 +190,7 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
   return (
     <div className={`relative break-words flex flex-col`}>
       {activityForThisBubble && activityForThisBubble.length > 0 && (
-        <div className="mb-3 border-b border-neutral-700 pb-3 text-xs">
+        <div className="mb-3 border-b border-border pb-3 text-xs">
           <ActivityTimeline
             processedEvents={activityForThisBubble}
             isLoading={isLiveActivityForThisBubble}
@@ -202,8 +203,8 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
           : JSON.stringify(message.content)}
       </ReactMarkdown>
       <Button
-        variant="default"
-        className={`cursor-pointer bg-neutral-700 border-neutral-600 text-neutral-300 self-end ${
+        variant="secondary"
+        className={`cursor-pointer self-end ${
           message.content.length > 0 ? "visible" : "hidden"
         }`}
         onClick={() =>
@@ -226,10 +227,12 @@ interface ChatMessagesViewProps {
   messages: Message[];
   isLoading: boolean;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  onSubmit: (inputValue: string, effort: string, model: string) => void;
+  onSubmit: (inputValue: string, effort: string, model: string, searchMode: SearchMode) => void;
   onCancel: () => void;
   liveActivityEvents: ProcessedEvent[];
   historicalActivities: Record<string, ProcessedEvent[]>;
+  searchMode: SearchMode;
+  setSearchMode: (mode: SearchMode) => void;
 }
 
 export function ChatMessagesView({
@@ -240,6 +243,8 @@ export function ChatMessagesView({
   onCancel,
   liveActivityEvents,
   historicalActivities,
+  searchMode,
+  setSearchMode,
 }: ChatMessagesViewProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -292,7 +297,7 @@ export function ChatMessagesView({
               <div className="flex items-start gap-3 mt-3">
                 {" "}
                 {/* AI message row structure */}
-                <div className="relative group max-w-[85%] md:max-w-[80%] rounded-xl p-3 shadow-sm break-words bg-neutral-800 text-neutral-100 rounded-bl-none w-full min-h-[56px]">
+                <div className="relative group max-w-[85%] md:max-w-[80%] rounded-xl p-3 shadow-sm break-words bg-card text-card-foreground rounded-bl-none w-full min-h-[56px] border border-border">
                   {liveActivityEvents.length > 0 ? (
                     <div className="text-xs">
                       <ActivityTimeline
@@ -302,7 +307,7 @@ export function ChatMessagesView({
                     </div>
                   ) : (
                     <div className="flex items-center justify-start h-full">
-                      <Loader2 className="h-5 w-5 animate-spin text-neutral-400 mr-2" />
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
                       <span>Processing...</span>
                     </div>
                   )}
@@ -311,12 +316,16 @@ export function ChatMessagesView({
             )}
         </div>
       </ScrollArea>
-      <InputForm
-        onSubmit={onSubmit}
-        isLoading={isLoading}
-        onCancel={onCancel}
-        hasHistory={messages.length > 0}
-      />
+      <div className="p-6">
+        <InputForm
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          onCancel={onCancel}
+          hasHistory={messages.length > 0}
+          searchMode={searchMode}
+          setSearchMode={setSearchMode}
+        />
+      </div>
     </div>
   );
 }

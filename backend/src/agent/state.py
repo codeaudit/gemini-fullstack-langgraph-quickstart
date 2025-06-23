@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import TypedDict
 
 from langgraph.graph import add_messages
-from typing_extensions import Annotated
+from typing_extensions import Annotated, NotRequired
 
 
 import operator
@@ -19,6 +19,11 @@ class OverallState(TypedDict):
     max_research_loops: int
     research_loop_count: int
     reasoning_model: str
+    search_mode: NotRequired[str]  # "no-search", "standard", "deep"
+    deep_research_mode: bool
+    validation_round: int
+    cross_reference_data: Annotated[list, operator.add]
+    source_validation_results: Annotated[list, operator.add]
 
 
 class ReflectionState(TypedDict):
@@ -41,6 +46,13 @@ class QueryGenerationState(TypedDict):
 class WebSearchState(TypedDict):
     search_query: str
     id: str
+
+
+class ValidationState(TypedDict):
+    validation_results: Annotated[list, operator.add]
+    reliability_score: float
+    contradictions_found: Annotated[list, operator.add]
+    source_credibility: Annotated[list, operator.add]
 
 
 @dataclass(kw_only=True)
