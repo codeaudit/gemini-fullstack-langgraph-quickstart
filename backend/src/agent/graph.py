@@ -73,8 +73,12 @@ def direct_llm_response(state: OverallState, config: RunnableConfig):
     user_question = get_research_topic(state["messages"])
     current_date = get_current_date()
     
-    # Create a direct response prompt
-    direct_prompt = f"""Current date: {current_date}
+    # Load custom prompts
+    from .prompts import load_custom_prompts
+    custom_prompts = load_custom_prompts()
+    
+    # Get the direct prompt template (custom or default)
+    direct_prompt_template = custom_prompts.get("direct_prompt_template", """Current date: {current_date}
 
 Based on your training knowledge, please provide a comprehensive answer to the following question:
 
@@ -88,7 +92,10 @@ Structure your response with:
 3. Any important caveats or limitations about the information
 4. Note that this response is based on training data and may not include the most recent information
 
-Do not make up specific facts, dates, or statistics that you're not confident about."""
+Do not make up specific facts, dates, or statistics that you're not confident about.""")
+
+    # Create a direct response prompt
+    direct_prompt = direct_prompt_template.format(current_date=current_date, user_question=user_question)
 
     # Initialize the LLM
     llm = ChatGoogleGenerativeAI(

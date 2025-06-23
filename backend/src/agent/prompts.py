@@ -1,4 +1,7 @@
 from datetime import datetime
+import json
+import pathlib
+from typing import Dict
 
 
 # Get current date in a readable format
@@ -6,7 +9,20 @@ def get_current_date():
     return datetime.now().strftime("%B %d, %Y")
 
 
-query_writer_instructions = """Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
+def load_custom_prompts() -> Dict[str, str]:
+    """Load custom prompts from configuration file if it exists"""
+    config_file = pathlib.Path(__file__).parent / "custom_prompts.json"
+    if config_file.exists():
+        try:
+            with open(config_file, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, KeyError):
+            pass
+    return {}
+
+
+# Default prompt definitions
+default_query_writer_instructions = """Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
 
 Instructions:
 - Always prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
@@ -34,7 +50,7 @@ Topic: What revenue grew more last year apple stock or the number of people buyi
 Context: {research_topic}"""
 
 
-web_searcher_instructions = """Conduct targeted Google Searches to gather the most recent, credible information on "{research_topic}" and synthesize it into a verifiable text artifact.
+default_web_searcher_instructions = """Conduct targeted Google Searches to gather the most recent, credible information on "{research_topic}" and synthesize it into a verifiable text artifact.
 
 Instructions:
 - Query should ensure that the most current information is gathered. The current date is {current_date}.
@@ -47,7 +63,7 @@ Research Topic:
 {research_topic}
 """
 
-reflection_instructions = """You are an expert research assistant analyzing summaries about "{research_topic}".
+default_reflection_instructions = """You are an expert research assistant analyzing summaries about "{research_topic}".
 
 Instructions:
 - Identify knowledge gaps or areas that need deeper exploration and generate a follow-up query. (1 or multiple).
@@ -79,7 +95,7 @@ Summaries:
 {summaries}
 """
 
-answer_instructions = """Generate a high-quality answer to the user's question based on the provided summaries.
+default_answer_instructions = """Generate a high-quality answer to the user's question based on the provided summaries.
 
 Instructions:
 - The current date is {current_date}.
@@ -94,3 +110,11 @@ User Context:
 
 Summaries:
 {summaries}"""
+
+# Load custom prompts or use defaults
+custom_prompts = load_custom_prompts()
+
+query_writer_instructions = custom_prompts.get("query_writer_instructions", default_query_writer_instructions)
+web_searcher_instructions = custom_prompts.get("web_searcher_instructions", default_web_searcher_instructions)
+reflection_instructions = custom_prompts.get("reflection_instructions", default_reflection_instructions)
+answer_instructions = custom_prompts.get("answer_instructions", default_answer_instructions)

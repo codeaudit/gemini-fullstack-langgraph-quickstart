@@ -4,9 +4,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ProcessedEvent } from "@/components/ActivityTimeline";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { ConfigurationPage } from "@/components/ConfigurationPage";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchMode } from "@/components/SearchModeSelector";
+import { Settings } from "lucide-react";
 
 export default function App() {
   const [processedEventsTimeline, setProcessedEventsTimeline] = useState<
@@ -19,6 +21,7 @@ export default function App() {
   const hasFinalizeEventOccurredRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("standard");
+  const [showConfiguration, setShowConfiguration] = useState(false);
   const thread = useStream<{
     messages: Message[];
     initial_search_query_count: number;
@@ -194,9 +197,27 @@ export default function App() {
     window.location.reload();
   }, [thread]);
 
+  if (showConfiguration) {
+    return (
+      <div className="flex h-screen bg-background text-foreground font-sans antialiased">
+        <ConfigurationPage onBack={() => setShowConfiguration(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground font-sans antialiased">
-      <ThemeToggle />
+      <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowConfiguration(true)}
+          className="opacity-80 hover:opacity-100 h-9 w-9 p-0"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+        <ThemeToggle />
+      </div>
       <main className="h-full w-full max-w-4xl mx-auto">
           {thread.messages.length === 0 ? (
             <WelcomeScreen
