@@ -15,7 +15,8 @@ app = FastAPI()
 # Flow types that the frontend can select
 AVAILABLE_FLOWS = {
     "single-agent": "Single Agent Research",
-    "multi-agent": "Multi-Agent Research System"
+    "multi-agent": "Multi-Agent Research System",
+    "claude": "Claude Research"
 }
 
 # Add CORS middleware

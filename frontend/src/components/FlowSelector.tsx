@@ -3,9 +3,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
-import { Network, Users, Brain, Info } from "lucide-react";
+import { Network, Users, Brain, Info, Zap } from "lucide-react"; // Added Zap for Claude icon
 
-export type FlowType = "single-agent" | "multi-agent";
+export type FlowType = "single-agent" | "multi-agent" | "claude";
 
 interface FlowSelectorProps {
   flowType: FlowType;
@@ -52,6 +52,20 @@ const FLOW_CONFIGS: FlowInfo[] = [
     ],
     estimatedTime: "3-7 minutes",
     complexity: "Advanced"
+  },
+  {
+    id: "claude",
+    name: "Claude Research",
+    description: "Research powered by Anthropic's Claude model",
+    icon: <Zap className="h-4 w-4 text-purple-500" />, // Using Zap icon, styled purple
+    features: [
+      "Iterative research using Claude",
+      "Knowledge synthesis by Claude",
+      "Direct LLM mode with Claude",
+      "(Web search via placeholder - full integration pending)"
+    ],
+    estimatedTime: "2-6 minutes", // Placeholder
+    complexity: "Simple" // Based on single-agent graph structure
   }
 ];
 

@@ -59,6 +59,16 @@ class Configuration(BaseModel):
         metadata={"description": "Additional validation rounds for deep research."}
     )
 
+    anthropic_api_key: Optional[str] = Field(
+        default=None,
+        description="API key for Anthropic models. If not set, Anthropic models cannot be used."
+    )
+
+    claude_model_name: str = Field(
+        default="claude-3-opus-20240229",
+        description="The name of the Claude model to use for the Claude 4 research flow."
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

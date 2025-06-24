@@ -8,11 +8,12 @@ This project demonstrates a fullstack application using a React frontend and a L
 
 - 💬 Fullstack application with a React frontend and LangGraph backend.
 - 🧠 Powered by a LangGraph agent for advanced research and conversational AI.
-- 🔍 Dynamic search query generation using Google Gemini models.
-- 🌐 Integrated web research via Google Search API.
+- 🔍 Dynamic search query generation using Google Gemini models or Anthropic Claude.
+- 🌐 Integrated web research (Google Search API for Gemini flow; placeholder for Claude flow pending search tool integration).
 - 🤔 Reflective reasoning to identify knowledge gaps and refine searches.
 - 📄 Generates answers with citations from gathered sources.
 - 🔄 Hot-reloading for both frontend and backend during development.
+- ✨ Supports Anthropic Claude models for an alternative research flow.
 
 ## Project Structure
 
@@ -29,10 +30,14 @@ Follow these steps to get the application running locally for development and te
 
 -   Node.js and npm (or yarn/pnpm)
 -   Python 3.11+
--   **`GEMINI_API_KEY`**: The backend agent requires a Google Gemini API key.
+-   **API Keys**: The backend agent requires API keys for the language models it uses.
     1.  Navigate to the `backend/` directory.
     2.  Create a file named `.env` by copying the `backend/.env.example` file.
-    3.  Open the `.env` file and add your Gemini API key: `GEMINI_API_KEY="YOUR_ACTUAL_API_KEY"`
+    3.  Open the `.env` file and add your API keys:
+        -   For Google Gemini models: `GEMINI_API_KEY="YOUR_GEMINI_API_KEY"`
+        -   For Anthropic Claude models (if using the Claude research flow): `ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY"`
+    4.  Optionally, you can also specify the Claude model name by adding (defaults to `claude-3-opus-20240229`):
+        `CLAUDE_MODEL_NAME="your_claude_model_version"`
 
 **2. Install Dependencies:**
 
@@ -63,15 +68,17 @@ _Alternatively, you can run the backend and frontend development servers separat
 
 ## How the Backend Agent Works (High-Level)
 
-The core of the backend is a LangGraph agent defined in `backend/src/agent/graph.py`. It follows these steps:
+The backend utilizes LangGraph to define and run research agents. Depending on the selected flow ("Single Agent", "Multi-Agent", or "Claude Research"), different underlying graphs and language models are used.
 
-<img src="./agent.png" title="Agent Flow" alt="Agent Flow" width="50%">
-
-1.  **Generate Initial Queries:** Based on your input, it generates a set of initial search queries using a Gemini model.
-2.  **Web Research:** For each query, it uses the Gemini model with the Google Search API to find relevant web pages.
-3.  **Reflection & Knowledge Gap Analysis:** The agent analyzes the search results to determine if the information is sufficient or if there are knowledge gaps. It uses a Gemini model for this reflection process.
-4.  **Iterative Refinement:** If gaps are found or the information is insufficient, it generates follow-up queries and repeats the web research and reflection steps (up to a configured maximum number of loops).
-5.  **Finalize Answer:** Once the research is deemed sufficient, the agent synthesizes the gathered information into a coherent answer, including citations from the web sources, using a Gemini model.
+-   **Gemini-based flows (`Single Agent`, `Multi-Agent`):** These are defined in `backend/src/agent/graph.py` and `backend/src/agent/multi_agent_graph.py` respectively. They generally follow these steps:
+    <img src="./agent.png" title="Agent Flow" alt="Agent Flow" width="50%">
+    1.  **Generate Initial Queries:** Based on your input, it generates a set of initial search queries using a Gemini model.
+    2.  **Web Research:** For each query, it uses the Gemini model with the Google Search API to find relevant web pages.
+    3.  **Reflection & Knowledge Gap Analysis:** The agent analyzes the search results to determine if the information is sufficient or if there are knowledge gaps. It uses a Gemini model for this reflection process.
+    4.  **Iterative Refinement:** If gaps are found or the information is insufficient, it generates follow-up queries and repeats the web research and reflection steps (up to a configured maximum number of loops).
+    5.  **Finalize Answer:** Once the research is deemed sufficient, the agent synthesizes the gathered information into a coherent answer, including citations from the web sources, using a Gemini model.
+-   **Claude-based flow (`Claude Research`):** This flow is defined in `backend/src/agent/claude_graph.py`. It follows a similar iterative research process but utilizes Anthropic's Claude model for all language understanding and generation tasks.
+    -   *Note on Web Search for Claude flow:* Currently, the web search step in the Claude flow is a placeholder. Full web research capabilities for this flow (e.g., using a tool like Tavily) are pending integration. The agent will generate search queries but will not execute them or retrieve live web content in the current version of this flow.
 
 ## CLI Example
 
@@ -101,9 +108,15 @@ _Note: If you are not running the docker-compose.yml example or exposing the bac
    ```
 **2. Run the Production Server:**
 
+   Ensure your API keys are available as environment variables for the Docker container. You can pass them directly or use an `.env` file with `docker-compose`.
    ```bash
-   GEMINI_API_KEY=<your_gemini_api_key> LANGSMITH_API_KEY=<your_langsmith_api_key> docker-compose up
+   GEMINI_API_KEY="YOUR_GEMINI_API_KEY" \
+   ANTHROPIC_API_KEY="YOUR_ANTHROPIC_API_KEY" \
+   CLAUDE_MODEL_NAME="claude-3-opus-20240229" \
+   LANGSMITH_API_KEY="YOUR_LANGSMITH_API_KEY" \
+   docker-compose up
    ```
+   *(Adjust `CLAUDE_MODEL_NAME` if needed, or omit to use the default)*
 
 Open your browser and navigate to `http://localhost:8123/app/` to see the application. The API will be available at `http://localhost:8123`.
 
@@ -113,7 +126,8 @@ Open your browser and navigate to `http://localhost:8123/app/` to see the applic
 - [Tailwind CSS](https://tailwindcss.com/) - For styling.
 - [Shadcn UI](https://ui.shadcn.com/) - For components.
 - [LangGraph](https://github.com/langchain-ai/langgraph) - For building the backend research agent.
-- [Google Gemini](https://ai.google.dev/models/gemini) - LLM for query generation, reflection, and answer synthesis.
+- [Google Gemini](https://ai.google.dev/models/gemini) - LLM for query generation, reflection, and answer synthesis in Gemini-based flows.
+- [Anthropic Claude](https://www.anthropic.com/claude) - LLM for the Claude-based research flow.
 
 ## License
 
