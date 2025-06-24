@@ -13,6 +13,7 @@ import {
   ProcessedEvent,
 } from "@/components/ActivityTimeline"; // Assuming ActivityTimeline is in the same dir or adjust path
 import { SearchMode } from "./SearchModeSelector";
+import { FlowType } from "./FlowSelector";
 
 // Markdown component props type from former ReportView
 type MdComponentProps = {
@@ -227,12 +228,14 @@ interface ChatMessagesViewProps {
   messages: Message[];
   isLoading: boolean;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  onSubmit: (inputValue: string, effort: string, model: string, searchMode: SearchMode) => void;
+  onSubmit: (inputValue: string, effort: string, model: string, searchMode: SearchMode, flowType?: FlowType) => void;
   onCancel: () => void;
   liveActivityEvents: ProcessedEvent[];
   historicalActivities: Record<string, ProcessedEvent[]>;
   searchMode: SearchMode;
   setSearchMode: (mode: SearchMode) => void;
+  flowType: FlowType;
+  setFlowType: (flow: FlowType) => void;
 }
 
 export function ChatMessagesView({
@@ -245,6 +248,8 @@ export function ChatMessagesView({
   historicalActivities,
   searchMode,
   setSearchMode,
+  flowType,
+  setFlowType,
 }: ChatMessagesViewProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -324,6 +329,8 @@ export function ChatMessagesView({
           hasHistory={messages.length > 0}
           searchMode={searchMode}
           setSearchMode={setSearchMode}
+          flowType={flowType}
+          setFlowType={setFlowType}
         />
       </div>
     </div>

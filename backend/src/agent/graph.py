@@ -74,7 +74,7 @@ def direct_llm_response(state: OverallState, config: RunnableConfig):
     current_date = get_current_date()
     
     # Load custom prompts
-    from .prompts import load_custom_prompts
+    from agent.prompts import load_custom_prompts
     custom_prompts = load_custom_prompts()
     
     # Get the direct prompt template (custom or default)

@@ -8,6 +8,7 @@ import { ConfigurationPage } from "@/components/ConfigurationPage";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchMode } from "@/components/SearchModeSelector";
+import { FlowType } from "@/components/FlowSelector";
 import { Settings } from "lucide-react";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const hasFinalizeEventOccurredRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<SearchMode>("standard");
+  const [flowType, setFlowType] = useState<FlowType>("single-agent");
   const [showConfiguration, setShowConfiguration] = useState(false);
   const thread = useStream<{
     messages: Message[];
@@ -30,8 +32,8 @@ export default function App() {
   }>({
     apiUrl: import.meta.env.DEV
       ? "http://localhost:2024"
-      : "http://localhost:8123",
-    assistantId: "agent",
+      : "http://localhost:2024",
+    assistantId: flowType === "multi-agent" ? "multi-agent" : "agent",
     messagesKey: "messages",
     onUpdateEvent: (event: any) => {
       let processedEvent: ProcessedEvent | null = null;
@@ -83,6 +85,27 @@ export default function App() {
           data: "Using LLM knowledge to answer your question",
         };
         hasFinalizeEventOccurredRef.current = true;
+      } else if (event.lead_agent) {
+        processedEvent = {
+          title: "Lead Agent Planning",
+          data: "Orchestrating research plan and delegating to specialized subagents",
+        };
+      } else if (event.search_subagent) {
+        processedEvent = {
+          title: "Specialized Search Agents",
+          data: "Multiple subagents researching different aspects in parallel",
+        };
+      } else if (event.citations_subagent) {
+        processedEvent = {
+          title: "Citations Validation",
+          data: "Validating and cross-referencing all sources",
+        };
+      } else if (event.finalize_report) {
+        processedEvent = {
+          title: "Multi-Agent Synthesis",
+          data: "Synthesizing findings from all specialized agents",
+        };
+        hasFinalizeEventOccurredRef.current = true;
       }
       if (processedEvent) {
         setProcessedEventsTimeline((prevEvents) => [
@@ -125,7 +148,7 @@ export default function App() {
   }, [thread.messages, thread.isLoading, processedEventsTimeline]);
 
   const handleSubmit = useCallback(
-    (submittedInputValue: string, effort: string, model: string, currentSearchMode: SearchMode) => {
+    (submittedInputValue: string, effort: string, model: string, currentSearchMode: SearchMode, currentFlowType?: FlowType) => {
       if (!submittedInputValue.trim()) return;
       setProcessedEventsTimeline([]);
       hasFinalizeEventOccurredRef.current = false;
@@ -226,6 +249,8 @@ export default function App() {
               onCancel={handleCancel}
               searchMode={searchMode}
               setSearchMode={setSearchMode}
+              flowType={flowType}
+              setFlowType={setFlowType}
             />
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-full">
@@ -252,6 +277,8 @@ export default function App() {
               historicalActivities={historicalActivities}
               searchMode={searchMode}
               setSearchMode={setSearchMode}
+              flowType={flowType}
+              setFlowType={setFlowType}
             />
           )}
       </main>

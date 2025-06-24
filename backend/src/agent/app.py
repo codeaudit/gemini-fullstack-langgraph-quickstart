@@ -11,10 +11,16 @@ from typing import Dict
 # Define the FastAPI app
 app = FastAPI()
 
+# Flow types that the frontend can select
+AVAILABLE_FLOWS = {
+    "single-agent": "Single Agent Research",
+    "multi-agent": "Multi-Agent Research System"
+}
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,7 +70,7 @@ PROMPTS_CONFIG_FILE = pathlib.Path(__file__).parent / "custom_prompts.json"
 
 def load_default_prompts() -> Dict[str, str]:
     """Load default prompts from prompts.py"""
-    from .prompts import (
+    from agent.prompts import (
         default_query_writer_instructions,
         default_web_searcher_instructions, 
         default_reflection_instructions,
@@ -140,6 +146,11 @@ async def reset_prompts():
         return defaults
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to reset prompts: {str(e)}")
+
+@app.get("/api/flows")
+async def get_available_flows():
+    """Get available flow types"""
+    return AVAILABLE_FLOWS
 
 # Mount the frontend under /app to not conflict with the LangGraph API routes
 app.mount(

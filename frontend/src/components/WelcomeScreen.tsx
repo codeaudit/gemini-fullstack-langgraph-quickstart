@@ -1,17 +1,21 @@
 import { InputForm } from "./InputForm";
 import { SearchMode } from "./SearchModeSelector";
+import { FlowSelector, FlowType } from "./FlowSelector";
 
 interface WelcomeScreenProps {
   handleSubmit: (
     submittedInputValue: string,
     effort: string,
     model: string,
-    searchMode: SearchMode
+    searchMode: SearchMode,
+    flowType?: FlowType
   ) => void;
   onCancel: () => void;
   isLoading: boolean;
   searchMode: SearchMode;
   setSearchMode: (mode: SearchMode) => void;
+  flowType: FlowType;
+  setFlowType: (flow: FlowType) => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
@@ -20,6 +24,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   isLoading,
   searchMode,
   setSearchMode,
+  flowType,
+  setFlowType,
 }) => (
   <div className="h-full flex flex-col items-center justify-center px-6 w-full max-w-4xl mx-auto">
     <div className="flex-1 flex flex-col justify-center items-center space-y-8">
@@ -32,7 +38,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
     </div>
 
-    <div className="w-full max-w-3xl mb-8">
+    <div className="w-full max-w-4xl mb-8">
       <InputForm
         onSubmit={handleSubmit}
         isLoading={isLoading}
@@ -40,6 +46,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         hasHistory={false}
         searchMode={searchMode}
         setSearchMode={setSearchMode}
+        flowType={flowType}
+        setFlowType={setFlowType}
       />
     </div>
     
@@ -48,5 +56,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         Powered by Intuition Machine Quaternion Process Theory
       </p>
     </div>
+
   </div>
 );
