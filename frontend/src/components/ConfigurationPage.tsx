@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, RotateCcw, ArrowLeft, Settings, Search, Brain } from "lucide-react";
+import { Save, RotateCcw, ArrowLeft, Settings, Search, Brain, Download, Upload } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SavePromptsModal } from "@/components/SavePromptsModal";
+import { LoadPromptsModal } from "@/components/LoadPromptsModal";
+import type { AllPrompts } from "@/lib/promptUtils";
 
 interface ConfigurationPageProps {
   onBack: () => void;
@@ -74,6 +77,10 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [activeTab, setActiveTab] = useState<"default" | "anthropic" | "nosearch">("default");
   const [selectedPrompt, setSelectedPrompt] = useState<string>("generate_query");
+  
+  // Modal states
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
 
   // Tab definitions
   const flowTabs = [
@@ -362,6 +369,114 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
     return [];
   };
 
+  const handleImportPrompts = async (importedPrompts: AllPrompts) => {
+    try {
+      // Update flow prompts
+      setFlowPrompts({
+        default_flow: importedPrompts.default_flow,
+        anthropic_flow: importedPrompts.anthropic_flow
+      });
+      
+      // Update no search prompt
+      setNoSearchPrompt(importedPrompts.no_search.direct_prompt_template);
+      
+      // Save to backend
+      await Promise.all([
+        fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/flow-prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            default_flow: importedPrompts.default_flow,
+            anthropic_flow: importedPrompts.anthropic_flow
+          })
+        }),
+        fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...await (await fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/prompts`)).json(),
+            direct_prompt_template: importedPrompts.no_search.direct_prompt_template
+          })
+        })
+      ]);
+      
+      // Update original states
+      setOriginalFlowPrompts({
+        default_flow: importedPrompts.default_flow,
+        anthropic_flow: importedPrompts.anthropic_flow
+      });
+      setOriginalNoSearchPrompt(importedPrompts.no_search.direct_prompt_template);
+      
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error) {
+      console.error("Failed to import prompts:", error);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  };
+
+  const handleImportSingleFlow = async (flowType: 'default' | 'anthropic' | 'nosearch', prompts: any) => {
+    try {
+      if (flowType === 'default' && prompts.default_flow) {
+        // Update only default flow
+        const updatedFlowPrompts = {
+          ...flowPrompts,
+          default_flow: prompts.default_flow
+        };
+        setFlowPrompts(updatedFlowPrompts);
+        
+        // Save to backend
+        await fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/flow-prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedFlowPrompts)
+        });
+
+        setOriginalFlowPrompts(updatedFlowPrompts);
+      } else if (flowType === 'anthropic' && prompts.anthropic_flow) {
+        // Update only anthropic flow
+        const updatedFlowPrompts = {
+          ...flowPrompts,
+          anthropic_flow: prompts.anthropic_flow
+        };
+        setFlowPrompts(updatedFlowPrompts);
+        
+        // Save to backend
+        await fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/flow-prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedFlowPrompts)
+        });
+
+        setOriginalFlowPrompts(updatedFlowPrompts);
+      } else if (flowType === 'nosearch' && prompts.no_search) {
+        // Update only no search prompt
+        const newPrompt = prompts.no_search.direct_prompt_template;
+        setNoSearchPrompt(newPrompt);
+        
+        // Save to backend
+        await fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...await (await fetch(`${import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123"}/api/prompts`)).json(),
+            direct_prompt_template: newPrompt
+          })
+        });
+
+        setOriginalNoSearchPrompt(newPrompt);
+      }
+      
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error) {
+      console.error("Failed to import single flow prompts:", error);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
@@ -381,6 +496,14 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
           </div>
           
           <div className="flex items-center space-x-3">
+            <Button variant="outline" size="sm" onClick={() => setShowSaveModal(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowLoadModal(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
             {hasChanges && (
               <Button variant="outline" size="sm" onClick={revertChanges}>
                 <RotateCcw className="h-4 w-4 mr-2" />
@@ -427,9 +550,9 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
               {flowTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
-                  <TabsTrigger key={tab.id} value={tab.id} className="flex items-center space-x-2">
+                  <TabsTrigger key={tab.id} value={tab.id} className="flex items-center justify-center space-x-2 w-full">
                     <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="hidden sm:inline truncate">{tab.label}</span>
                   </TabsTrigger>
                 );
               })}
@@ -438,12 +561,12 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
           
           <div className="flex-1 flex overflow-hidden">
             {flowTabs.map((tab) => (
-              <TabsContent key={tab.id} value={tab.id} className="flex-1 flex h-full m-0">
+              <TabsContent key={tab.id} value={tab.id} className="flex-1 flex h-full m-0 w-full">
                 {tab.id === "nosearch" ? (
                   // No Search Tab - Sidebar + content layout for consistency
                   <>
                     {/* Left Sidebar - No Search Description */}
-                    <div className="w-80 border-r border-border p-6 flex-shrink-0">
+                    <div className="w-80 min-w-80 max-w-80 border-r border-border p-6 flex-shrink-0">
                       <div className="mb-4 p-4 border border-border rounded-lg">
                         <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tab.label}</h3>
                         <p className="text-sm text-muted-foreground mt-2">{tab.description}</p>
@@ -474,18 +597,19 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                     </div>
 
                     {/* Right Content - Prompt Editor */}
-                    <div className="flex-1 p-6">
-                      <Card className="h-full flex flex-col">
+                    <div className="flex-1 min-w-0 p-6">
+                      <Card className="h-full w-full flex flex-col">
                         <CardHeader className="flex-shrink-0">
                           <CardTitle className="text-lg">No Search Mode Prompt</CardTitle>
                           <CardDescription>Configure the template for direct AI responses without web research</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col min-h-0">
+                        <CardContent className="flex-1 flex flex-col min-h-0 w-full">
                           <Textarea
                             value={noSearchPrompt}
                             onChange={(e) => setNoSearchPrompt(e.target.value)}
                             placeholder="Enter no search mode prompt template..."
-                            className="flex-1 font-mono text-sm resize-none"
+                            className="flex-1 w-full font-mono text-sm resize-none min-w-full"
+                            style={{ width: '100%', minWidth: '100%' }}
                             disabled={isLoading}
                           />
                           <div className="mt-4 p-4 bg-muted rounded-lg flex-shrink-0">
@@ -503,7 +627,7 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                   // Flow tabs with sidebar navigation
                   <>
                     {/* Left Sidebar - Prompt Navigation */}
-                    <div className="w-80 border-r border-border p-6 flex-shrink-0">
+                    <div className="w-80 min-w-80 max-w-80 border-r border-border p-6 flex-shrink-0">
                       <div className="mb-4 p-4 border border-border rounded-lg">
                         <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{tab.label}</h3>
                         <p className="text-sm text-muted-foreground mt-2">{tab.description}</p>
@@ -514,10 +638,10 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                           <Button
                             key={prompt.id}
                             variant={selectedPrompt === prompt.id ? "default" : "ghost"}
-                            className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal"
+                            className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal min-h-16"
                             onClick={() => setSelectedPrompt(prompt.id)}
                           >
-                            <div className="w-full">
+                            <div className="w-full min-w-0">
                               <div className="font-medium leading-tight">{prompt.label}</div>
                               <div className="text-xs text-muted-foreground mt-1 leading-relaxed break-words">
                                 {prompt.description}
@@ -529,18 +653,19 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                     </div>
 
                     {/* Right Content - Prompt Editor */}
-                    <div className="flex-1 p-6">
-                      <Card className="h-full flex flex-col">
+                    <div className="flex-1 min-w-0 p-6">
+                      <Card className="h-full w-full flex flex-col">
                         <CardHeader className="flex-shrink-0">
                           <CardTitle className="text-lg">{getCurrentPromptConfig().label}</CardTitle>
                           <CardDescription>{getCurrentPromptConfig().description}</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col min-h-0">
+                        <CardContent className="flex-1 flex flex-col min-h-0 w-full">
                           <Textarea
                             value={getCurrentPromptValue()}
                             onChange={(e) => updateCurrentPromptValue(e.target.value)}
                             placeholder={`Enter ${getCurrentPromptConfig().label.toLowerCase()} prompt...`}
-                            className="flex-1 font-mono text-sm resize-none"
+                            className="flex-1 w-full font-mono text-sm resize-none min-w-full"
+                            style={{ width: '100%', minWidth: '100%' }}
                             disabled={isLoading}
                           />
                           <div className="mt-4 p-4 bg-muted rounded-lg flex-shrink-0">
@@ -563,6 +688,22 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
           </div>
         </Tabs>
       </div>
+
+      {/* Modals */}
+      <SavePromptsModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        flowPrompts={flowPrompts}
+        noSearchPrompt={noSearchPrompt}
+        activeTab={activeTab}
+      />
+      
+      <LoadPromptsModal
+        isOpen={showLoadModal}
+        onClose={() => setShowLoadModal(false)}
+        onImport={handleImportPrompts}
+        onImportSingleFlow={handleImportSingleFlow}
+      />
     </div>
   );
 }
