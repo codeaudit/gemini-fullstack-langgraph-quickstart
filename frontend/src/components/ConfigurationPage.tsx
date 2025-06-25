@@ -478,7 +478,7 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full w-full max-w-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between">
@@ -543,8 +543,8 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="h-full flex flex-col">
+      <div className="flex-1 w-full max-w-full overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="h-full w-full max-w-full flex flex-col">
           <div className="border-b border-border px-6 py-4">
             <TabsList className="grid w-full grid-cols-3 max-w-md">
               {flowTabs.map((tab) => {
@@ -559,9 +559,9 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
             </TabsList>
           </div>
           
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 w-full max-w-full flex overflow-hidden">
             {flowTabs.map((tab) => (
-              <TabsContent key={tab.id} value={tab.id} className="flex-1 flex h-full m-0 w-full">
+              <TabsContent key={tab.id} value={tab.id} className="flex-1 w-full max-w-full flex h-full m-0 overflow-hidden">
                 {tab.id === "nosearch" ? (
                   // No Search Tab - Sidebar + content layout for consistency
                   <>
@@ -597,19 +597,19 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                     </div>
 
                     {/* Right Content - Prompt Editor */}
-                    <div className="flex-1 min-w-0 p-6">
-                      <Card className="h-full w-full flex flex-col">
+                    <div className="flex-1 w-0 max-w-full p-6 overflow-hidden">
+                      <Card className="h-full w-full max-w-full flex flex-col">
                         <CardHeader className="flex-shrink-0">
                           <CardTitle className="text-lg">No Search Mode Prompt</CardTitle>
                           <CardDescription>Configure the template for direct AI responses without web research</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col min-h-0 w-full">
+                        <CardContent className="flex-1 flex flex-col min-h-0 w-full max-w-full overflow-hidden">
                           <Textarea
                             value={noSearchPrompt}
                             onChange={(e) => setNoSearchPrompt(e.target.value)}
                             placeholder="Enter no search mode prompt template..."
-                            className="flex-1 w-full font-mono text-sm resize-none min-w-full"
-                            style={{ width: '100%', minWidth: '100%' }}
+                            className="flex-1 w-full font-mono text-sm resize-none [field-sizing:initial]"
+                            style={{ width: '100%', minWidth: '100%', maxWidth: '100%' }}
                             disabled={isLoading}
                           />
                           <div className="mt-4 p-4 bg-muted rounded-lg flex-shrink-0">
@@ -653,19 +653,19 @@ export function ConfigurationPage({ onBack }: ConfigurationPageProps) {
                     </div>
 
                     {/* Right Content - Prompt Editor */}
-                    <div className="flex-1 min-w-0 p-6">
-                      <Card className="h-full w-full flex flex-col">
+                    <div className="flex-1 w-0 max-w-full p-6 overflow-hidden">
+                      <Card className="h-full w-full max-w-full flex flex-col">
                         <CardHeader className="flex-shrink-0">
                           <CardTitle className="text-lg">{getCurrentPromptConfig().label}</CardTitle>
                           <CardDescription>{getCurrentPromptConfig().description}</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 flex flex-col min-h-0 w-full">
+                        <CardContent className="flex-1 flex flex-col min-h-0 w-full max-w-full overflow-hidden">
                           <Textarea
                             value={getCurrentPromptValue()}
                             onChange={(e) => updateCurrentPromptValue(e.target.value)}
                             placeholder={`Enter ${getCurrentPromptConfig().label.toLowerCase()} prompt...`}
-                            className="flex-1 w-full font-mono text-sm resize-none min-w-full"
-                            style={{ width: '100%', minWidth: '100%' }}
+                            className="flex-1 w-full font-mono text-sm resize-none [field-sizing:initial]"
+                            style={{ width: '100%', minWidth: '100%', maxWidth: '100%' }}
                             disabled={isLoading}
                           />
                           <div className="mt-4 p-4 bg-muted rounded-lg flex-shrink-0">
